@@ -162,6 +162,57 @@ community-feed/
 - `created_at`: DateTimeField (auto_now_add)
 - `unique_together = ('user', 'comment')` - Prevents double-likes
 
+## Deployment on Render
+
+This project is configured for easy deployment on [Render](https://render.com).
+
+### Prerequisites
+- A Render account
+- Your GitHub repo connected to Render
+
+### Steps
+
+1. **Fork/Clone this repo to your GitHub**
+
+2. **Deploy Backend**:
+   - In Render dashboard, create a new Web Service from your repo
+   - Set Root Directory to `backend`
+   - Runtime: Python 3
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `gunicorn community_project.wsgi:application --bind 0.0.0.0:$PORT`
+   - Add Environment Variables (see `backend/.env.example`):
+     - `DJANGO_SETTINGS_MODULE=community_project.settings`
+     - `DEBUG=false`
+     - `SECRET_KEY=your-secure-secret-key`
+     - `ALLOWED_HOSTS=your-frontend-domain.onrender.com,your-backend-domain.onrender.com`
+     - `CORS_ALLOWED_ORIGINS=https://your-frontend-domain.onrender.com`
+   - For database, use Render's PostgreSQL (recommended) or keep SQLite (note: data resets on redeploy)
+
+3. **Deploy Frontend**:
+   - In Render, create a new Static Site from the same repo
+   - Set Root Directory to `frontend`
+   - Build Command: `npm run build`
+   - Publish Directory: `dist`
+   - Add Environment Variable:
+     - `VITE_API_BASE=https://your-backend-service.onrender.com/api`
+
+4. **Update Domains**:
+   - After both are deployed, update the backend's `ALLOWED_HOSTS` and `CORS_ALLOWED_ORIGINS` with the actual frontend URL
+   - Update frontend's `VITE_API_BASE` with the actual backend URL
+
+5. **Run Migrations (for Backend)**:
+   - In Render's backend service, go to Shell tab and run:
+     ```bash
+     python manage.py migrate
+     ```
+
+Your app should now be live! Frontend at `https://your-frontend.onrender.com`, backend API at `https://your-backend.onrender.com/api`.
+
+### Notes
+- Free tier: Backend may sleep after inactivity; upgrade for 24/7
+- Database: Use PostgreSQL in production for data persistence
+- Security: Generate a strong `SECRET_KEY` for production
+
 ## License
 
 MIT
